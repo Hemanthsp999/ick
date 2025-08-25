@@ -12,6 +12,10 @@ pub const ViewScreen = struct {
     left_header: vxfw.Text,
     right_header: vxfw.Text,
     middle_header: vxfw.Text,
+
+    left_window: vxfw.Border = undefined,
+    middle_window: vxfw.Border = undefined,
+    right_window: vxfw.Border = undefined,
     children: [3]vxfw.SubSurface = undefined,
     allocator: std.mem.Allocator,
 
@@ -27,12 +31,24 @@ pub const ViewScreen = struct {
         const self: *ViewScreen = @ptrCast(@alignCast(ptr));
         switch (event) {
             .init => {
+                self.left_window.child = self.left_header.widget();
+                self.left_window.style = .{ .fg = .{ .rgb = [_]u8{ 255, 0, 0 } }, .bg = .{ .rgb = [_]u8{ 2, 2, 2 } } };
+                self.left_window.labels = &[_]vxfw.Border.BorderLabel{
+                    .{ .text = "Root Folder", .alignment = .top_center },
+                };
+
+                self.middle_window.child = self.middle_header.widget();
+                self.middle_window.style = .{ .fg = .{ .rgb = [_]u8{ 255, 255, 0 } }, .bg = .{ .rgb = [_]u8{ 2, 2, 2 } } };
+
+                self.right_window.child = self.right_header.widget();
+                self.right_window.style = .{ .fg = .{ .rgb = [_]u8{ 255, 255, 0 } }, .bg = .{ .rgb = [_]u8{ 255, 255, 234 } } };
+
                 // Middle <-> Right
-                self.right_split.lhs = self.middle_header.widget();
-                self.right_split.rhs = self.right_header.widget();
+                self.right_split.lhs = self.middle_window.widget();
+                self.right_split.rhs = self.right_window.widget();
 
                 // Left <-> Middle <-> Right
-                self.main_split.lhs = self.left_header.widget();
+                self.main_split.lhs = self.left_window.widget();
                 self.main_split.rhs = self.right_split.widget();
             },
             .key_press => |key| {
@@ -48,24 +64,24 @@ pub const ViewScreen = struct {
     fn drawFn(ptr: *anyopaque, ctx: vxfw.DrawContext) std.mem.Allocator.Error!vxfw.Surface {
         const self: *ViewScreen = @ptrCast(@alignCast(ptr));
         //const surf = try self.main_split.widget().draw(ctx);
+
         const total_width = ctx.max.size().width;
         const total_height = ctx.max.size().height - 2;
         const panel = total_width / 3;
 
-        const size:vxfw.Size = .{ .height = total_height, .width = panel };
+        const size: vxfw.Size = .{ .height = total_height, .width = panel };
         const left_ctx = vxfw.DrawContext{ .arena = ctx.arena, .cell_size = ctx.cell_size, .max = .{ .height = ctx.max.height, .width = panel }, .min = size };
         const middle_ctx = left_ctx;
         const right_ctx = left_ctx;
 
-        const parent: vxfw.Border = .{ .child = self.left_header.widget(),  .labels = &[_]vxfw.Border.BorderLabel{ .{ .text = "parent", .alignment = .top_center}, .{ .text = "permissions", .alignment = .bottom_center}}};
+        const parent: vxfw.Border = .{ .child = self.left_header.widget(), .labels = &[_]vxfw.Border.BorderLabel{ .{ .text = "parent", .alignment = .top_center }, .{ .text = "permissions", .alignment = .bottom_center } } };
         const parent_surface = try parent.widget().draw(left_ctx);
 
-        const pwd: vxfw.Border = .{ .child = self.left_header.widget(),  .labels = &[_]vxfw.Border.BorderLabel{ .{ .text = "pwd", .alignment = .top_center}}};
+        const pwd: vxfw.Border = .{ .child = self.left_header.widget(), .labels = &[_]vxfw.Border.BorderLabel{.{ .text = "pwd", .alignment = .top_center }} };
         const pwd_surface = try pwd.widget().draw(middle_ctx);
 
-        const preview: vxfw.Border = .{ .child = self.left_header.widget(),  .labels = &[_]vxfw.Border.BorderLabel{ .{ .text = "preview", .alignment = .top_center}}};
+        const preview: vxfw.Border = .{ .child = self.left_header.widget(), .labels = &[_]vxfw.Border.BorderLabel{.{ .text = "preview", .alignment = .top_center }} };
         const preview_surface = try preview.widget().draw(right_ctx);
-
 
         const left_panel = 0;
         const middle_panel = left_panel + panel;

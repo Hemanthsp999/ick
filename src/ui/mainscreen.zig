@@ -19,9 +19,13 @@ pub fn entry(allocator: std.mem.Allocator) !void {
     defer allocator.destroy(screen_instance);
 
     screen_instance.* = .{
-        .left_header = .{ .text = "Root" },
-        .right_header = .{ .text = "child" },
-        .middle_header = .{ .text = "curr" },
+        .left_header = .{ .text = "Root folder" },
+        .right_header = .{ .text = "Child folder" },
+        .middle_header = .{ .text = "Current folder" },
+
+        .left_window = .{ .child = undefined, .style = undefined },
+        .middle_window = .{ .child = undefined, .style = undefined },
+        .right_window = .{ .child = undefined, .style = undefined },
         .main_split = .{ .lhs = undefined, .rhs = undefined, .width = 10 },
         .right_split = .{ .lhs = undefined, .rhs = undefined, .width = 10 },
         .allocator = allocator,
