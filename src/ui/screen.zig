@@ -192,10 +192,6 @@ pub const ViewScreen = struct {
     left_header: vxfw.Text,
     right_header: vxfw.Text,
     middle_header: vxfw.Text,
-
-    left_window: vxfw.Border = undefined,
-    middle_window: vxfw.Border = undefined,
-    right_window: vxfw.Border = undefined,
     children: [3]vxfw.SubSurface = undefined,
     allocator: std.mem.Allocator,
     dirView: *DirView,
@@ -272,43 +268,15 @@ pub const ViewScreen = struct {
     fn drawFn(ptr: *anyopaque, ctx: vxfw.DrawContext) std.mem.Allocator.Error!vxfw.Surface {
         const self: *ViewScreen = @ptrCast(@alignCast(ptr));
 
-        const total_width = ctx.max.size().width;
-        const total_height = ctx.max.size().height - 2;
-        const panel = total_width / 3;
+        self.children[0] = try self.getPanel("parent", self.dirView.widget(), ctx, 0);
+        self.children[1] = try self.getPanel("pwd", self.left_header.widget(), ctx, 1);
+        self.children[2] = try self.getPanel("preview", self.left_header.widget(), ctx, 2);
 
-        const size: vxfw.Size = .{ .height = total_height, .width = panel };
-        const left_ctx = vxfw.DrawContext{ .arena = ctx.arena, .cell_size = ctx.cell_size, .max = .{ .height = ctx.max.height, .width = panel }, .min = size };
-        const middle_ctx = left_ctx;
-        const right_ctx = left_ctx;
-
-        const parent: vxfw.Border = .{ .child = self.left_header.widget(), .labels = &[_]vxfw.Border.BorderLabel{ .{ .text = "parent", .alignment = .top_center }, .{ .text = "permissions", .alignment = .bottom_center } } };
-        const parent_surface = try parent.widget().draw(left_ctx);
-
-        const pwd: vxfw.Border = .{ .child = self.left_header.widget(), .labels = &[_]vxfw.Border.BorderLabel{.{ .text = "pwd", .alignment = .top_center }} };
-        const pwd_surface = try pwd.widget().draw(middle_ctx);
-
-        const preview: vxfw.Border = .{ .child = self.left_header.widget(), .labels = &[_]vxfw.Border.BorderLabel{.{ .text = "preview", .alignment = .top_center }} };
-        const preview_surface = try preview.widget().draw(right_ctx);
-
-        const left_panel = 0;
-        const middle_panel = left_panel + panel;
-        const right_panel = total_width - (middle_panel);
-        self.children[0] = .{ .origin = .{ .row = 0, .col = left_panel }, .surface = parent_surface };
-        self.children[1] = .{ .origin = .{ .row = 0, .col = middle_panel }, .surface = pwd_surface };
-        self.children[2] = .{ .origin = .{ .row = 0, .col = right_panel }, .surface = preview_surface };
-
-        return .{ .size = ctx.max.size(), .widget = self.widget(), .buffer = &.{}, .children = &self.children };
-    }
-};
-
-pub const Scroll = struct {
-    height: u16 = 0,
-    max_height: u8,
-    content_height: u16,
-    files: *files.folderStructure,
-    middle_scroll: u16 = 0,
-
-    pub fn initscroll(height: u16, file_struct: *files.folderStructure) Scroll {
-        return .{ .height = height, .files = file_struct };
+        return .{
+            .size = ctx.max.size(),
+            .widget = self.widget(),
+            .buffer = &.{},
+            .children = &self.children,
+        };
     }
 };
